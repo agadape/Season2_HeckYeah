@@ -1,6 +1,15 @@
 import { Search, Plus, Filter, FileText, CheckCircle2, AlertCircle, UploadCloud, MoreVertical } from 'lucide-react';
+import { createClient } from '@/lib/supabase/server';
 
-export default function DocumentsPage() {
+export default async function DocumentsPage() {
+  const supabase = await createClient();
+  const { data: documents } = await supabase
+    .from('documents')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  const data = documents || [];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -16,50 +25,35 @@ export default function DocumentsPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <DocCard 
-          title="Academic Transcript (S1)" 
-          type="Official Document" 
-          updated="Oct 12, 2024" 
-          status="ready" 
-        />
-        <DocCard 
-          title="IELTS Test Report Form" 
-          type="Certificate" 
-          updated="Nov 5, 2024" 
-          status="ready" 
-        />
-        <DocCard 
-          title="Master CV / Resume" 
-          type="Personal" 
-          updated="2 days ago" 
-          status="ready" 
-        />
-        <DocCard 
-          title="Statement of Purpose (KAUST)" 
-          type="Essay" 
-          updated="1 week ago" 
-          status="draft" 
-        />
-        <DocCard 
-          title="Letter of Rec 1 (Prof. Budi)" 
-          type="Reference" 
-          updated="Pending" 
-          status="missing" 
-        />
-        <DocCard 
-          title="Letter of Rec 2 (Manager)" 
-          type="Reference" 
-          updated="Pending" 
-          status="missing" 
-        />
-      </div>
+      {data.length === 0 ? (
+        <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-12 text-center">
+          <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-slate-900 mb-1">No documents yet</h3>
+          <p className="text-sm text-slate-500 mb-4">Start uploading your CV, transcripts, and certificates.</p>
+          <button className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-slate-200 bg-white hover:bg-slate-50 text-slate-900 h-9 px-4 py-2 gap-2 shadow-sm">
+            <UploadCloud className="w-4 h-4" />
+            Upload First Document
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {data.map(doc => (
+            <DocCard 
+              key={doc.id}
+              title={doc.name} 
+              type={doc.document_type || 'General'} 
+              updated={new Date(doc.updated_at).toLocaleDateString()} 
+              status={doc.status || 'draft'} 
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 function DocCard({ title, type, updated, status }: any) {
-  const isReady = status === 'ready';
+  const isReady = status === 'ready' || status === 'Verified';
   const isDraft = status === 'draft';
   
   return (

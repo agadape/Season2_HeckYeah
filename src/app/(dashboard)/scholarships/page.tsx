@@ -1,50 +1,17 @@
-import { Search, Plus, Filter, MoreHorizontal, MapPin, GraduationCap, DollarSign, Clock, AlertCircle } from 'lucide-react';
+import { Search, Plus, Filter, MoreHorizontal, MapPin, GraduationCap, DollarSign, AlertCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
-import Link from 'next/link';
 import AddScholarshipButton from './AddScholarshipButton';
 
 export default async function ScholarshipsPage() {
-  let scholarships: any[] = [];
-  let errorMsg = null;
-
-  try {
-    const supabase = await createClient();
-    // Fetch real data from Supabase
-    const { data, error } = await supabase
-      .from('scholarships')
-      .select(`
-        *,
-        countries ( name )
-      `)
-      .order('created_at', { ascending: false });
+  const supabase = await createClient();
+  
+  const { data: scholarships, error } = await supabase
+    .from('scholarships')
+    .select('*, countries ( name )')
+    .order('created_at', { ascending: false });
     
-    if (error) throw error;
-    scholarships = data || [];
-  } catch (err: any) {
-    console.error("Supabase Error:", err);
-    errorMsg = "Could not connect to Supabase. Displaying mock data. Please configure your .env variables.";
-    // Fallback Mock Data
-    scholarships = [
-      {
-        id: 'mock-1',
-        name: 'KAUST Fellowship',
-        provider: 'King Abdullah University of Science and Technology',
-        countries: { name: 'Saudi Arabia' },
-        fully_funded: true,
-        application_status: 'In Progress',
-        created_at: new Date().toISOString()
-      },
-      {
-        id: 'mock-2',
-        name: 'Erasmus Mundus (EMJM)',
-        provider: 'Multiple Consortiums',
-        countries: { name: 'Europe' },
-        fully_funded: true,
-        application_status: 'Not Started',
-        created_at: new Date().toISOString()
-      }
-    ];
-  }
+  const hasError = !!error;
+  const data = scholarships || [];
 
   return (
     <div className="space-y-6">
@@ -60,12 +27,12 @@ export default async function ScholarshipsPage() {
         <AddScholarshipButton />
       </div>
 
-      {errorMsg && (
-        <div className="bg-amber-50 border border-amber-200 text-amber-700 p-4 rounded-md flex items-start gap-3 text-sm shadow-sm">
+      {hasError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md flex items-start gap-3 text-sm shadow-sm">
           <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
           <div>
             <p className="font-semibold mb-1">Database Connection Failed</p>
-            <p>{errorMsg}</p>
+            <p>{error.message} - Ensure your environment variables are configured correctly.</p>
           </div>
         </div>
       )}
@@ -102,14 +69,14 @@ export default async function ScholarshipsPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
-              {scholarships.length === 0 ? (
+              {data.length === 0 && !hasError ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-8 text-center text-sm text-slate-500">
                     No scholarships found. Click "Add Program" to track your first one!
                   </td>
                 </tr>
               ) : (
-                scholarships.map((s) => (
+                data.map((s) => (
                   <ScholarshipRow 
                     key={s.id}
                     program={s.name} 

@@ -1,6 +1,15 @@
-import { Calendar as CalendarIcon, Clock, ArrowRight } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, AlertCircle } from 'lucide-react';
+import { createClient } from '@/lib/supabase/server';
 
-export default function CalendarPage() {
+export default async function CalendarPage() {
+  const supabase = await createClient();
+  const { data: deadlines } = await supabase
+    .from('deadlines')
+    .select('*, scholarships(name)')
+    .order('application_deadline', { ascending: true });
+
+  const data = deadlines || [];
+
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
@@ -11,57 +20,28 @@ export default function CalendarPage() {
       </div>
 
       <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden p-6">
-        <div className="relative border-l-2 border-slate-100 ml-3 md:ml-6 space-y-10 py-4">
-          
-          <TimelineMonth month="August 2026" />
-          <TimelineEvent 
-            title="KAUST Fellowship Application Closes" 
-            date="Aug 31, 2026" 
-            tag="Deadline" 
-            tagColor="red" 
-            desc="Submit all required documents via the KAUST admissions portal." 
-          />
-
-          <TimelineMonth month="September 2026" />
-          <TimelineEvent 
-            title="IELTS Exam (British Council)" 
-            date="Sep 15, 2026" 
-            tag="Exam" 
-            tagColor="blue" 
-            desc="Test location at Jakarta. Results expected in 13 days." 
-          />
-
-          <TimelineMonth month="December 2026" />
-          <TimelineEvent 
-            title="Erasmus Mundus Scholarship" 
-            date="Dec 15, 2026" 
-            tag="Deadline" 
-            tagColor="red" 
-            desc="Application deadline for the Fall 2027 intake." 
-          />
-          
-          <TimelineMonth month="March 2027" />
-          <TimelineEvent 
-            title="Global Korea Scholarship (GKS)" 
-            date="Mar 1, 2027" 
-            tag="Deadline" 
-            tagColor="red" 
-            desc="Embassy track application deadline." 
-          />
-
-        </div>
+        {data.length === 0 ? (
+          <div className="text-center py-12">
+            <CalendarIcon className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-900 mb-1">No upcoming events</h3>
+            <p className="text-sm text-slate-500">Your calendar is currently clear. Deadlines will appear here once you track scholarships.</p>
+          </div>
+        ) : (
+          <div className="relative border-l-2 border-slate-100 ml-3 md:ml-6 space-y-10 py-4">
+            {/* Very simple rendering for actual database deadlines */}
+            {data.map((d: any) => (
+              <TimelineEvent 
+                key={d.id}
+                title={d.scholarships?.name || 'Unknown Program'} 
+                date={d.application_deadline ? new Date(d.application_deadline).toLocaleDateString() : 'TBD'} 
+                tag={d.deadline_status || 'Deadline'} 
+                tagColor="red" 
+                desc={d.notes || 'No description provided.'} 
+              />
+            ))}
+          </div>
+        )}
       </div>
-    </div>
-  );
-}
-
-function TimelineMonth({ month }: { month: string }) {
-  return (
-    <div className="relative">
-      <div className="absolute -left-[35px] md:-left-[47px] bg-white text-slate-400 p-1">
-        <CalendarIcon className="w-5 h-5" />
-      </div>
-      <h3 className="font-semibold text-slate-900 text-lg mb-2">{month}</h3>
     </div>
   );
 }
