@@ -1,6 +1,7 @@
 import { Search, Plus, Filter, MoreHorizontal, MapPin, GraduationCap, DollarSign, Clock, AlertCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
+import AddScholarshipButton from './AddScholarshipButton';
 
 export default async function ScholarshipsPage() {
   let scholarships: any[] = [];
@@ -55,11 +56,8 @@ export default async function ScholarshipsPage() {
           </p>
         </div>
         
-        {/* Later this will open a modal, but for now we'll just leave it as a button */}
-        <button className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 disabled:pointer-events-none disabled:opacity-50 bg-slate-900 text-slate-50 shadow hover:bg-slate-900/90 h-9 px-4 py-2 gap-2">
-          <Plus className="w-4 h-4" />
-          Add Program
-        </button>
+        {/* Add Program Interactive Modal */}
+        <AddScholarshipButton />
       </div>
 
       {errorMsg && (
