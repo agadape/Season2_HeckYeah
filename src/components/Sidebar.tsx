@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, GraduationCap, FileText, Calendar, Compass, Settings, LogOut } from 'lucide-react';
+import { LayoutGrid, GraduationCap, FileText, Calendar, Compass, Settings, LogOut, ListChecks } from 'lucide-react';
+import { logout } from '@/app/auth-actions';
 
 const navigation = [
   { name: 'Overview', href: '/dashboard', icon: LayoutGrid },
+  { name: 'Checklist', href: '/checklist', icon: ListChecks },
   { name: 'Scholarships', href: '/scholarships', icon: Compass },
   { name: 'Applications', href: '/applications', icon: GraduationCap },
   { name: 'Documents', href: '/documents', icon: FileText },
@@ -59,10 +61,12 @@ export default function Sidebar() {
                 <Settings className={`mr-3 flex-shrink-0 h-4 w-4 ${pathname === '/settings' ? 'text-slate-900' : 'text-slate-400 group-hover:text-slate-500'}`} />
                 Settings
               </Link>
-              <button className="w-full group flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
-                <LogOut className="mr-3 flex-shrink-0 h-4 w-4 text-slate-400 group-hover:text-slate-500" />
-                Log out
-              </button>
+              <form action={logout}>
+                <button type="submit" className="w-full group flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+                  <LogOut className="mr-3 flex-shrink-0 h-4 w-4 text-slate-400 group-hover:text-slate-500" />
+                  Log out
+                </button>
+              </form>
            </nav>
         </div>
       </div>

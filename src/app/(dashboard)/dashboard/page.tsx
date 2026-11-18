@@ -1,6 +1,7 @@
-import { FileCheck2, CalendarClock, DollarSign, MoreHorizontal } from 'lucide-react';
+import { FileCheck2, ListChecks, MoreHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import { daysUntil, dueLabel, sortOpen, todayWIB, type Task } from '@/lib/tasks';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -20,6 +21,15 @@ export default async function DashboardPage() {
     .from('applications')
     .select('*', { count: 'exact', head: true })
     .neq('status', 'Archived');
+
+  const { data: openTaskRows } = await supabase
+    .from('tasks')
+    .select('id, title, notes, category, priority, due_date, done, done_at, created_at')
+    .eq('done', false);
+
+  const today = todayWIB();
+  const openTasks = ((openTaskRows ?? []) as Task[]).sort(sortOpen);
+  const overdueCount = openTasks.filter((t) => t.due_date && daysUntil(t.due_date, today) < 0).length;
 
   const data = scholarships || [];
   const docs = documents || [];
@@ -42,10 +52,10 @@ export default async function DashboardPage() {
 
       {/* Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard title="Checklist Pending" value={openTasks.length.toString()} trend={overdueCount > 0 ? `${overdueCount} telat` : "Nggak ada yang telat"} alert={overdueCount > 0} />
         <MetricCard title="Active Applications" value={activeAppsCount?.toString() || "0"} trend="In pipeline" />
         <MetricCard title="Tracked Scholarships" value={data.length.toString()} trend="Total programs saved" />
         <MetricCard title="Missing Documents" value={(totalDocs - readyDocs).toString()} trend={totalDocs > 0 ? "Action required" : "No documents added"} alert={(totalDocs - readyDocs) > 0} />
-        <MetricCard title="Overall Readiness" value={`${readiness}%`} trend="Document completion" />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -125,15 +135,34 @@ export default async function DashboardPage() {
             </Link>
           </div>
 
-          {/* Upcoming Events/Deadlines */}
+          {/* Checklist: next things not to forget */}
           <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-6">
             <h2 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
-              <CalendarClock className="w-4 h-4 text-slate-500" />
-              Timeline
+              <ListChecks className="w-4 h-4 text-slate-500" />
+              Jangan Lupa
             </h2>
-            <div className="space-y-4 text-center">
-              <p className="text-sm text-slate-500 py-4">No upcoming deadlines found.</p>
-            </div>
+            {openTasks.length === 0 ? (
+              <p className="text-sm text-slate-500 text-center py-4">Checklist kosong.</p>
+            ) : (
+              <ul className="space-y-3">
+                {openTasks.slice(0, 6).map((t) => {
+                  const late = t.due_date ? daysUntil(t.due_date, today) < 0 : false;
+                  return (
+                    <li key={t.id} className="flex items-start justify-between gap-3">
+                      <span className="text-sm text-slate-700 min-w-0 break-words">{t.title}</span>
+                      {t.due_date && (
+                        <span className={`shrink-0 text-xs font-medium ${late ? 'text-red-600' : 'text-slate-500'}`}>
+                          {dueLabel(t.due_date, today)}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            <Link href="/checklist" className="block text-center w-full mt-6 py-2 px-4 border border-slate-200 rounded-md text-sm font-medium text-slate-900 hover:bg-slate-50 transition-colors">
+              Buka Checklist
+            </Link>
           </div>
 
         </div>
